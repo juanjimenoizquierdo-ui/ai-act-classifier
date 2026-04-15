@@ -1,0 +1,58 @@
+[
+  {
+    "id": "tc_001",
+    "description": "A bank uses an AI model to automatically decide whether to approve or reject mortgage loan applications based on applicant financial data and credit history.",
+    "expected_risk_level": "high_risk",
+    "expected_references": ["Annex III, point 5"],
+    "notes": "Creditworthiness assessment for natural persons — Annex III point 5(b). Human oversight obligation applies."
+  },
+  {
+    "id": "tc_002",
+    "description": "A municipality deploys cameras with real-time facial recognition in a public square to identify suspects in an ongoing criminal investigation.",
+    "expected_risk_level": "prohibited",
+    "expected_references": ["Article 5(1)(d)"],
+    "notes": "Real-time remote biometric identification in publicly accessible spaces. Law enforcement exception in Article 5(2) may apply but is narrow."
+  },
+  {
+    "id": "tc_003",
+    "description": "An e-commerce platform uses AI to recommend products to users based on their browsing history.",
+    "expected_risk_level": "minimal_risk",
+    "expected_references": [],
+    "notes": "Standard recommendation system. No specific AI Act obligations. GDPR applies separately."
+  },
+  {
+    "id": "tc_004",
+    "description": "An HR software company offers a tool that scores and ranks job candidates' CVs before a human recruiter reviews the shortlist.",
+    "expected_risk_level": "high_risk",
+    "expected_references": ["Annex III, point 4"],
+    "notes": "Recruitment and CV screening — Annex III point 4(a). The human review at the end does not remove the high-risk classification."
+  },
+  {
+    "id": "tc_005",
+    "description": "A customer service chatbot for a telecom company that answers billing questions and troubleshoots connectivity issues.",
+    "expected_risk_level": "limited_risk",
+    "expected_references": ["Article 50(1)"],
+    "notes": "Transparency obligation: users must be informed they are interacting with an AI."
+  },
+  {
+    "id": "tc_006",
+    "description": "A school uses AI to generate personalised study plans based on each student's test scores and learning pace.",
+    "expected_risk_level": "high_risk",
+    "expected_references": ["Annex III, point 3"],
+    "notes": "AI in educational or vocational training that determines access to education or evaluates learning outcomes."
+  },
+  {
+    "id": "tc_007",
+    "description": "A tool that generates synthetic images of products for e-commerce listings using generative AI.",
+    "expected_risk_level": "minimal_risk",
+    "expected_references": [],
+    "notes": "Product image generation. Article 50(4) on deepfake labelling may apply only if the images could be mistaken for authentic photos in a misleading context."
+  },
+  {
+    "id": "tc_008",
+    "description": "An immigration authority uses AI to assess the risk level of visa applicants and flag those for manual review.",
+    "expected_risk_level": "high_risk",
+    "expected_references": ["Annex III, point 7"],
+    "notes": "Migration, asylum and border control — Annex III point 7. Affects fundamental rights."
+  }
+]
