@@ -247,7 +247,7 @@ st.markdown(f"""
     <div class="eu-badge">Regulation (EU) 2024/1689 · AI Act</div>
     <h1>
         <img src="data:image/png;base64,{LOGO_B64}"
-             style="height:3.5rem; vertical-align:middle; margin-right:0.6rem;">
+             style="height:3.5rem; vertical-align:middle; margin-right:0.2rem;">
         AI Act Risk Classifier
     </h1>
     <p>Classify AI system use cases by risk level — with article-by-article legal
