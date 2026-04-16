@@ -1,11 +1,8 @@
 """
 Streamlit web interface for the AI Act Risk Classifier.
 
-Run locally:
-  streamlit run app.py
-
-Deploy free:
-  https://streamlit.io/cloud → connect GitHub repo → done.
+Run locally:  streamlit run app.py
+Deploy free:  https://streamlit.io/cloud
 """
 
 import json
@@ -22,8 +19,6 @@ from models.schemas import RiskLevel
 
 
 # ── Auto-ingest on cold start ─────────────────────────────────────────────────
-# On Streamlit Cloud, chroma_db/ is not persisted. This function rebuilds
-# the vector store from the committed JSON chunks on first load.
 
 @st.cache_resource(show_spinner="Loading AI Act corpus into vector store...")
 def ensure_corpus_loaded():
@@ -49,7 +44,6 @@ def ensure_corpus_loaded():
     if collection.count() == 0:
         with open(chunks_file, encoding="utf-8") as f:
             chunks = json.load(f)
-
         batch_size = 50
         for i in range(0, len(chunks), batch_size):
             batch = chunks[i: i + batch_size]
@@ -57,11 +51,14 @@ def ensure_corpus_loaded():
                 ids=[c["id"] for c in batch],
                 documents=[c["text"] for c in batch],
                 metadatas=[
-                    {"article": c.get("article", ""), "section": c.get("section", ""), "language": c.get("language", "")}
+                    {
+                        "article": c.get("article", ""),
+                        "section": c.get("section", ""),
+                        "language": c.get("language", ""),
+                    }
                     for c in batch
                 ],
             )
-
     return collection.count()
 
 
@@ -75,40 +72,45 @@ st.set_page_config(
     layout="centered",
 )
 
-# ── Styles ────────────────────────────────────────────────────────────────────
+# ── Design tokens ─────────────────────────────────────────────────────────────
 
 RISK_STYLES = {
     RiskLevel.PROHIBITED: {
-        "bg": "#8B1A1A",
-        "text": "#ffffff",
+        "grad": "linear-gradient(135deg, #3D0A0A 0%, #5C1A1A 100%)",
+        "border": "#EF4444",
+        "text": "#FEE2E2",
         "label": "PROHIBITED",
         "icon": "🚫",
         "description": "Article 5 — This practice is banned under the AI Act.",
     },
     RiskLevel.HIGH: {
-        "bg": "#92400E",
-        "text": "#ffffff",
+        "grad": "linear-gradient(135deg, #3D1D00 0%, #5C3410 100%)",
+        "border": "#F59E0B",
+        "text": "#FEF3C7",
         "label": "HIGH RISK",
         "icon": "⚠️",
         "description": "Article 6 + Annex III — Strict obligations apply before deployment.",
     },
     RiskLevel.LIMITED: {
-        "bg": "#1E5A8A",
-        "text": "#ffffff",
+        "grad": "linear-gradient(135deg, #0A1D3D 0%, #1A3A6B 100%)",
+        "border": "#4F6BFF",
+        "text": "#DBEAFE",
         "label": "LIMITED RISK",
         "icon": "ℹ️",
         "description": "Article 50 — Transparency obligations apply.",
     },
     RiskLevel.MINIMAL: {
-        "bg": "#1A6B4A",
-        "text": "#ffffff",
+        "grad": "linear-gradient(135deg, #0A2D1A 0%, #1A4D2E 100%)",
+        "border": "#10B981",
+        "text": "#D1FAE5",
         "label": "MINIMAL RISK",
         "icon": "✅",
         "description": "No specific AI Act obligations.",
     },
     RiskLevel.UNCLEAR: {
-        "bg": "#374151",
-        "text": "#ffffff",
+        "grad": "linear-gradient(135deg, #1C2030 0%, #2A2F45 100%)",
+        "border": "#6B7280",
+        "text": "#E5E7EB",
         "label": "UNCLEAR",
         "icon": "❓",
         "description": "Insufficient information — human legal review required.",
@@ -116,117 +118,114 @@ RISK_STYLES = {
 }
 
 CONFIDENCE_CONFIG = {
-    "high": ("🟢", "High confidence"),
-    "medium": ("🟡", "Medium confidence"),
-    "low": ("🔴", "Low confidence — human review strongly recommended"),
+    "high":   ("#10B981", "High confidence"),
+    "medium": ("#F59E0B", "Medium confidence"),
+    "low":    ("#EF4444", "Low confidence — human review strongly recommended"),
 }
+
+# ── Global CSS ────────────────────────────────────────────────────────────────
 
 st.markdown("""
 <style>
-    /* ── EU colour palette ── */
-    :root {
-        --eu-navy:       #003399;
-        --eu-navy-dark:  #001A4D;
-        --eu-pastel:     #D4E4F7;
-        --eu-pastel-mid: #A8C8F0;
-        --eu-text:       #1A1A2E;
-    }
+    .block-container { padding-top: 1.2rem !important; }
 
-    /* ── App header strip ── */
+    /* Hero header */
     .eu-header {
-        background: linear-gradient(135deg, var(--eu-navy-dark) 0%, var(--eu-navy) 100%);
-        color: #ffffff;
-        padding: 1.4rem 1.8rem 1.2rem;
-        border-radius: 10px;
-        margin-bottom: 1.2rem;
+        background: linear-gradient(135deg, #0A0E27 0%, #1a1f4e 60%, #2d35a8 100%);
+        color: #fff;
+        padding: 2rem 2rem 1.6rem;
+        border-radius: 14px;
+        margin-bottom: 1.4rem;
+        border: 1px solid rgba(79,107,255,0.25);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
-    .eu-header h1 {
-        font-size: 1.7rem;
-        font-weight: 800;
-        margin: 0 0 0.3rem 0;
-        letter-spacing: 0.02em;
-    }
-    .eu-header p {
-        font-size: 0.88rem;
-        opacity: 0.85;
-        margin: 0;
-    }
-    .eu-stars {
-        font-size: 1rem;
-        letter-spacing: 0.15em;
-        margin-bottom: 0.6rem;
-        opacity: 0.7;
-    }
-
-    /* ── Risk banner ── */
-    .risk-banner {
-        padding: 1.2rem 1.5rem;
-        border-radius: 10px;
-        margin: 1rem 0;
-        border-left: 6px solid rgba(255,255,255,0.4);
-    }
-    .risk-label {
-        font-size: 1.6rem;
-        font-weight: 800;
-        letter-spacing: 0.05em;
-        margin: 0;
-    }
-    .risk-desc {
-        font-size: 0.88rem;
-        margin-top: 0.3rem;
-        opacity: 0.88;
-    }
-
-    /* ── Section labels ── */
-    .section-label {
-        font-size: 0.72rem;
+    .eu-badge {
+        display: inline-block;
+        background: rgba(79,107,255,0.15);
+        border: 1px solid rgba(79,107,255,0.4);
+        color: #7B93FF;
+        font-size: 0.68rem;
         font-weight: 700;
-        letter-spacing: 0.12em;
-        color: var(--eu-navy);
+        letter-spacing: 0.1em;
+        padding: 0.2rem 0.8rem;
+        border-radius: 20px;
+        margin-bottom: 0.9rem;
         text-transform: uppercase;
-        margin: 1.2rem 0 0.4rem 0;
-        border-bottom: 2px solid var(--eu-pastel);
-        padding-bottom: 0.2rem;
     }
+    .eu-stars { font-size: 0.8rem; letter-spacing: 0.25em; color: #4F6BFF; margin-bottom: 0.7rem; }
+    .eu-header h1 { font-size: 1.85rem; font-weight: 800; margin: 0 0 0.4rem; letter-spacing: 0.01em; }
+    .eu-header p  { font-size: 0.88rem; color: #9CA3C0; margin: 0; line-height: 1.55; }
 
-    /* ── Citation boxes ── */
-    .citation-box {
-        background: var(--eu-pastel);
-        border-left: 4px solid var(--eu-navy);
-        padding: 0.8rem 1rem;
-        margin: 0.5rem 0;
-        border-radius: 0 8px 8px 0;
+    /* Risk banner */
+    .risk-banner {
+        padding: 1.4rem 1.6rem;
+        border-radius: 12px;
+        margin: 1.2rem 0;
+        border-left: 5px solid;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.35);
     }
-    .citation-article {
+    .risk-label { font-size: 1.5rem; font-weight: 800; letter-spacing: 0.06em; margin: 0; }
+    .risk-desc  { font-size: 0.84rem; margin-top: 0.35rem; opacity: 0.8; }
+
+    /* Section labels */
+    .section-label {
+        font-size: 0.68rem;
         font-weight: 700;
-        font-size: 0.92rem;
-        color: var(--eu-navy-dark);
-    }
-    .citation-summary {
-        font-size: 0.85rem;
-        color: #3a4a6b;
-        margin-top: 0.25rem;
+        letter-spacing: 0.14em;
+        color: #4F6BFF;
+        text-transform: uppercase;
+        margin: 1.4rem 0 0.5rem;
+        border-bottom: 1px solid rgba(79,107,255,0.2);
+        padding-bottom: 0.25rem;
     }
 
-    /* ── Ambiguity boxes ── */
+    /* Citation cards */
+    .citation-box {
+        background: #12163A;
+        border: 1px solid #1C2152;
+        border-left: 4px solid #4F6BFF;
+        padding: 0.9rem 1.1rem;
+        margin: 0.5rem 0;
+        border-radius: 0 10px 10px 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .citation-article { font-weight: 700; font-size: 0.88rem; color: #7B93FF; }
+    .citation-summary { font-size: 0.83rem; color: #9CA3C0; margin-top: 0.25rem; line-height: 1.5; }
+
+    /* Reasoning card */
+    .reasoning-box {
+        background: #12163A;
+        border: 1px solid #1C2152;
+        padding: 1.1rem 1.3rem;
+        border-radius: 10px;
+        font-size: 0.87rem;
+        color: #E5E7EB;
+        line-height: 1.75;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+
+    /* Ambiguity cards */
     .ambiguity-box {
-        background: #EFF6FF;
-        border-left: 4px solid var(--eu-pastel-mid);
-        padding: 0.7rem 1rem;
-        margin: 0.4rem 0;
-        border-radius: 0 8px 8px 0;
-        font-size: 0.88rem;
-        color: #1e3a5f;
+        background: rgba(245,158,11,0.07);
+        border: 1px solid rgba(245,158,11,0.2);
+        border-left: 4px solid #F59E0B;
+        padding: 0.8rem 1.1rem;
+        margin: 0.45rem 0;
+        border-radius: 0 10px 10px 0;
+        font-size: 0.85rem;
+        color: #FEF3C7;
+        line-height: 1.55;
     }
 
-    /* ── Disclaimer ── */
+    /* Disclaimer */
     .disclaimer {
-        font-size: 0.76rem;
-        color: #6b7280;
+        font-size: 0.75rem;
+        color: #6B7280;
         font-style: italic;
-        border-top: 2px solid var(--eu-pastel);
+        border-top: 1px solid rgba(79,107,255,0.12);
         padding-top: 1rem;
-        margin-top: 1.8rem;
+        margin-top: 2rem;
+        line-height: 1.55;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -236,9 +235,10 @@ st.markdown("""
 st.markdown("""
 <div class="eu-header">
     <div class="eu-stars">★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★</div>
+    <div class="eu-badge">Regulation (EU) 2024/1689 · AI Act</div>
     <h1>⚖️ AI Act Risk Classifier</h1>
-    <p>Classify AI system use cases under <strong>Regulation (EU) 2024/1689</strong>
-    — article-by-article legal justification powered by RAG + LLM.</p>
+    <p>Classify AI system use cases by risk level — with article-by-article legal
+    justification powered by RAG retrieval + LLM reasoning.</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -271,9 +271,8 @@ with st.sidebar:
         st.info("Get a free key with $5 credit at [console.anthropic.com](https://console.anthropic.com).")
 
     st.divider()
-    st.markdown("### About")
+    st.markdown("### Risk levels")
     st.markdown(
-        "Classifies AI system use cases under the EU AI Act:\n\n"
         "- 🚫 **Prohibited** — Article 5\n"
         "- ⚠️ **High Risk** — Article 6 + Annex III\n"
         "- ℹ️ **Limited Risk** — Article 50\n"
@@ -288,7 +287,8 @@ with st.sidebar:
     )
     st.divider()
     st.markdown(
-        "⚠️ **Not legal advice.** [Read disclaimer](https://github.com/juanjimenoizquierdo-ui/ai-act-classifier/blob/master/docs/legal_disclaimer.md)"
+        "⚠️ **Not legal advice.** [Read disclaimer]"
+        "(https://github.com/juanjimenoizquierdo-ui/ai-act-classifier/blob/master/docs/legal_disclaimer.md)"
     )
     st.markdown("🔗 [GitHub](https://github.com/juanjimenoizquierdo-ui/ai-act-classifier)")
 
@@ -306,7 +306,7 @@ EXAMPLES = {
 tab_own, tab_example = st.tabs(["✏️  Classify your use case", "📋  Try an example"])
 
 with tab_own:
-    st.caption("Describe the AI system you want to classify — the more detail, the better the analysis.")
+    st.caption("Describe the AI system — the more detail, the better the analysis.")
     use_case_own = st.text_area(
         "Use case description",
         height=140,
@@ -316,7 +316,7 @@ with tab_own:
     btn_own = st.button("Classify", type="primary", use_container_width=True, key="btn_own")
 
 with tab_example:
-    st.caption("Select a pre-built case to see how the classifier works across different risk levels.")
+    st.caption("Select a pre-built case to see the classifier across different risk levels.")
     selected = st.selectbox(
         "Example cases",
         options=list(EXAMPLES.keys()),
@@ -325,7 +325,8 @@ with tab_example:
     st.info(EXAMPLES[selected])
     btn_example = st.button("Classify this example", type="primary", use_container_width=True, key="btn_example")
 
-# Resolve which use case to classify
+# ── Resolve input ─────────────────────────────────────────────────────────────
+
 use_case = ""
 classify_btn = False
 if btn_own and use_case_own.strip():
@@ -352,9 +353,7 @@ if classify_btn:
             if "api_key" in str(e).lower() or "authentication" in str(e).lower():
                 st.error(
                     "**LLM API key not configured.**\n\n"
-                    "To enable classifications on this deployment, add your Anthropic API key "
-                    "in **Settings → Secrets**:\n\n"
-                    "```toml\nANTHROPIC_API_KEY = \"sk-ant-...\"\nLLM_PROVIDER = \"claude\"\n```\n\n"
+                    "Enter your Anthropic API key in the sidebar.\n\n"
                     "Get a free key with $5 credit at [console.anthropic.com](https://console.anthropic.com)."
                 )
             else:
@@ -365,14 +364,13 @@ if classify_btn:
             st.stop()
 
         cfg = RISK_STYLES.get(result.risk_level, RISK_STYLES[RiskLevel.UNCLEAR])
-        conf_icon, conf_label = CONFIDENCE_CONFIG.get(
-            result.confidence, ("🔴", "Low confidence")
-        )
+        conf_color, conf_label = CONFIDENCE_CONFIG.get(result.confidence, ("#6B7280", "Unknown"))
 
         # Risk banner
         st.markdown(
             f"""
-            <div class="risk-banner" style="background:{cfg['bg']}; color:{cfg['text']}">
+            <div class="risk-banner"
+                 style="background:{cfg['grad']}; color:{cfg['text']}; border-left-color:{cfg['border']}">
                 <div class="risk-label">{cfg['icon']} {cfg['label']}</div>
                 <div class="risk-desc">{cfg['description']}</div>
             </div>
@@ -381,26 +379,30 @@ if classify_btn:
         )
 
         # Confidence
-        st.markdown(f"{conf_icon} {conf_label}")
-        st.divider()
+        st.markdown(
+            f'<span style="color:{conf_color}; font-size:0.85rem; font-weight:600;">'
+            f'● {conf_label}</span>',
+            unsafe_allow_html=True,
+        )
 
         # Legal basis
         if result.primary_citations:
             st.markdown('<div class="section-label">Legal Basis</div>', unsafe_allow_html=True)
             for citation in result.primary_citations:
                 st.markdown(
-                    f"""
-                    <div class="citation-box">
+                    f"""<div class="citation-box">
                         <div class="citation-article">{citation.article}</div>
                         <div class="citation-summary">{citation.summary}</div>
-                    </div>
-                    """,
+                    </div>""",
                     unsafe_allow_html=True,
                 )
 
         # Reasoning
         st.markdown('<div class="section-label">Legal Reasoning</div>', unsafe_allow_html=True)
-        st.markdown(result.reasoning)
+        st.markdown(
+            f'<div class="reasoning-box">{result.reasoning}</div>',
+            unsafe_allow_html=True,
+        )
 
         # Ambiguities
         if result.ambiguities:
