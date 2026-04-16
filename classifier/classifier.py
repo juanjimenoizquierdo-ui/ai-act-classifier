@@ -13,6 +13,8 @@ import os
 import re
 from dotenv import load_dotenv
 
+load_dotenv()  # local dev; Streamlit Cloud injects secrets as env vars automatically
+
 from models.schemas import ClassificationResult, RiskLevel, ArticleCitation
 from classifier.rules import apply_rules
 from classifier.retriever import AIActRetriever

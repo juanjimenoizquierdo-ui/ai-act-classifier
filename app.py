@@ -271,8 +271,24 @@ if classify_btn:
     if not use_case.strip():
         st.warning("Please enter a use case description.")
     else:
-        with st.spinner("Running pipeline: rules → RAG → LLM..."):
-            result = classify(use_case.strip())
+        try:
+            with st.spinner("Running pipeline: rules → RAG → LLM..."):
+                result = classify(use_case.strip())
+        except TypeError as e:
+            if "api_key" in str(e).lower() or "authentication" in str(e).lower():
+                st.error(
+                    "**LLM API key not configured.**\n\n"
+                    "To enable classifications on this deployment, add your Anthropic API key "
+                    "in **Settings → Secrets**:\n\n"
+                    "```toml\nANTHROPIC_API_KEY = \"sk-ant-...\"\nLLM_PROVIDER = \"claude\"\n```\n\n"
+                    "Get a free key with $5 credit at [console.anthropic.com](https://console.anthropic.com)."
+                )
+            else:
+                st.error(f"Unexpected error: {e}")
+            st.stop()
+        except Exception as e:
+            st.error(f"Classification failed: {e}")
+            st.stop()
 
         cfg = RISK_STYLES.get(result.risk_level, RISK_STYLES[RiskLevel.UNCLEAR])
         conf_icon, conf_label = CONFIDENCE_CONFIG.get(
