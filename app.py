@@ -5,6 +5,7 @@ Run locally:  streamlit run app.py
 Deploy free:  https://streamlit.io/cloud
 """
 
+import base64
 import json
 import os
 import sys
@@ -64,11 +65,19 @@ def ensure_corpus_loaded():
 
 ensure_corpus_loaded()
 
+# ── Logo ──────────────────────────────────────────────────────────────────────
+
+def _logo_b64() -> str:
+    logo_path = Path(__file__).parent / "assets" / "logo.png"
+    return base64.b64encode(logo_path.read_bytes()).decode()
+
+LOGO_B64 = _logo_b64()
+
 # ── Page config ───────────────────────────────────────────────────────────────
 
 st.set_page_config(
     page_title="AI Act Risk Classifier",
-    page_icon="⚖️",
+    page_icon=str(Path(__file__).parent / "assets" / "logo.png"),
     layout="centered",
 )
 
@@ -232,11 +241,15 @@ st.markdown("""
 
 # ── Header ────────────────────────────────────────────────────────────────────
 
-st.markdown("""
+st.markdown(f"""
 <div class="eu-header">
     <div class="eu-stars">★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★</div>
     <div class="eu-badge">Regulation (EU) 2024/1689 · AI Act</div>
-    <h1>⚖️ AI Act Risk Classifier</h1>
+    <h1>
+        <img src="data:image/png;base64,{LOGO_B64}"
+             style="height:2.2rem; vertical-align:middle; margin-right:0.5rem; border-radius:6px;">
+        AI Act Risk Classifier
+    </h1>
     <p>Classify AI system use cases by risk level — with article-by-article legal
     justification powered by RAG retrieval + LLM reasoning.</p>
 </div>
