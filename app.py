@@ -8,6 +8,8 @@ Deploy free:
   https://streamlit.io/cloud → connect GitHub repo → done.
 """
 
+import json
+import os
 import sys
 from pathlib import Path
 
@@ -17,6 +19,53 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from classifier import classify
 from models.schemas import RiskLevel
+
+
+# ── Auto-ingest on cold start ─────────────────────────────────────────────────
+# On Streamlit Cloud, chroma_db/ is not persisted. This function rebuilds
+# the vector store from the committed JSON chunks on first load.
+
+@st.cache_resource(show_spinner="Loading AI Act corpus into vector store...")
+def ensure_corpus_loaded():
+    import chromadb
+    from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
+
+    chroma_path = os.getenv("CHROMA_DB_PATH", "./chroma_db")
+    collection_name = os.getenv("CHROMA_COLLECTION", "ai_act_corpus")
+    embedding_model = os.getenv(
+        "EMBEDDING_MODEL",
+        "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+    )
+    chunks_file = Path("corpus/chunks/ai_act_combined.json")
+
+    embedding_fn = SentenceTransformerEmbeddingFunction(model_name=embedding_model)
+    client = chromadb.PersistentClient(path=chroma_path)
+    collection = client.get_or_create_collection(
+        name=collection_name,
+        embedding_function=embedding_fn,
+        metadata={"hnsw:space": "cosine"},
+    )
+
+    if collection.count() == 0:
+        with open(chunks_file, encoding="utf-8") as f:
+            chunks = json.load(f)
+
+        batch_size = 50
+        for i in range(0, len(chunks), batch_size):
+            batch = chunks[i: i + batch_size]
+            collection.add(
+                ids=[c["id"] for c in batch],
+                documents=[c["text"] for c in batch],
+                metadatas=[
+                    {"article": c.get("article", ""), "section": c.get("section", ""), "language": c.get("language", "")}
+                    for c in batch
+                ],
+            )
+
+    return collection.count()
+
+
+ensure_corpus_loaded()
 
 # ── Page config ───────────────────────────────────────────────────────────────
 
