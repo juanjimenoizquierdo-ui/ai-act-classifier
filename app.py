@@ -77,6 +77,7 @@ ICON_B64 = {
     RiskLevel.HIGH:       _img_b64("high_risk.png"),
     RiskLevel.LIMITED:    _img_b64("limited_risk.png"),
     RiskLevel.MINIMAL:    _img_b64("minimal_risk.png"),
+    RiskLevel.UNCLEAR:    _img_b64("unclear.png"),
 }
 
 # ── Page config ───────────────────────────────────────────────────────────────
