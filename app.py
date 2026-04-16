@@ -292,12 +292,15 @@ with st.sidebar:
 
     st.divider()
     st.markdown("### Risk levels")
-    st.markdown(
-        "- 🚫 **Prohibited** — Article 5\n"
-        "- ⚠️ **High Risk** — Article 6 + Annex III\n"
-        "- ℹ️ **Limited Risk** — Article 50\n"
-        "- ✅ **Minimal Risk** — No specific obligations"
-    )
+    _i = ICON_B64
+    st.markdown(f"""
+        <div style="line-height:2.2; font-size:0.88rem;">
+            <div><img src="data:image/png;base64,{_i[RiskLevel.PROHIBITED]}" style="height:1.1rem; vertical-align:middle; margin-right:0.4rem;"> <b>Prohibited</b> — Article 5</div>
+            <div><img src="data:image/png;base64,{_i[RiskLevel.HIGH]}" style="height:1.1rem; vertical-align:middle; margin-right:0.4rem;"> <b>High Risk</b> — Article 6 + Annex III</div>
+            <div><img src="data:image/png;base64,{_i[RiskLevel.LIMITED]}" style="height:1.1rem; vertical-align:middle; margin-right:0.4rem;"> <b>Limited Risk</b> — Article 50</div>
+            <div><img src="data:image/png;base64,{_i[RiskLevel.MINIMAL]}" style="height:1.1rem; vertical-align:middle; margin-right:0.4rem;"> <b>Minimal Risk</b> — No specific obligations</div>
+        </div>
+    """, unsafe_allow_html=True)
     st.divider()
     st.markdown("### How it works")
     st.markdown(
