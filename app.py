@@ -79,35 +79,35 @@ st.set_page_config(
 
 RISK_STYLES = {
     RiskLevel.PROHIBITED: {
-        "bg": "#c0392b",
+        "bg": "#8B1A1A",
         "text": "#ffffff",
         "label": "PROHIBITED",
         "icon": "🚫",
         "description": "Article 5 — This practice is banned under the AI Act.",
     },
     RiskLevel.HIGH: {
-        "bg": "#e67e22",
+        "bg": "#92400E",
         "text": "#ffffff",
         "label": "HIGH RISK",
         "icon": "⚠️",
         "description": "Article 6 + Annex III — Strict obligations apply before deployment.",
     },
     RiskLevel.LIMITED: {
-        "bg": "#f1c40f",
-        "text": "#000000",
+        "bg": "#1E5A8A",
+        "text": "#ffffff",
         "label": "LIMITED RISK",
         "icon": "ℹ️",
         "description": "Article 50 — Transparency obligations apply.",
     },
     RiskLevel.MINIMAL: {
-        "bg": "#27ae60",
+        "bg": "#1A6B4A",
         "text": "#ffffff",
         "label": "MINIMAL RISK",
         "icon": "✅",
         "description": "No specific AI Act obligations.",
     },
     RiskLevel.UNCLEAR: {
-        "bg": "#7f8c8d",
+        "bg": "#374151",
         "text": "#ffffff",
         "label": "UNCLEAR",
         "icon": "❓",
@@ -123,75 +123,124 @@ CONFIDENCE_CONFIG = {
 
 st.markdown("""
 <style>
+    /* ── EU colour palette ── */
+    :root {
+        --eu-navy:       #003399;
+        --eu-navy-dark:  #001A4D;
+        --eu-pastel:     #D4E4F7;
+        --eu-pastel-mid: #A8C8F0;
+        --eu-text:       #1A1A2E;
+    }
+
+    /* ── App header strip ── */
+    .eu-header {
+        background: linear-gradient(135deg, var(--eu-navy-dark) 0%, var(--eu-navy) 100%);
+        color: #ffffff;
+        padding: 1.4rem 1.8rem 1.2rem;
+        border-radius: 10px;
+        margin-bottom: 1.2rem;
+    }
+    .eu-header h1 {
+        font-size: 1.7rem;
+        font-weight: 800;
+        margin: 0 0 0.3rem 0;
+        letter-spacing: 0.02em;
+    }
+    .eu-header p {
+        font-size: 0.88rem;
+        opacity: 0.85;
+        margin: 0;
+    }
+    .eu-stars {
+        font-size: 1rem;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.6rem;
+        opacity: 0.7;
+    }
+
+    /* ── Risk banner ── */
     .risk-banner {
         padding: 1.2rem 1.5rem;
         border-radius: 10px;
         margin: 1rem 0;
+        border-left: 6px solid rgba(255,255,255,0.4);
     }
     .risk-label {
-        font-size: 1.8rem;
+        font-size: 1.6rem;
         font-weight: 800;
         letter-spacing: 0.05em;
         margin: 0;
     }
     .risk-desc {
-        font-size: 0.9rem;
+        font-size: 0.88rem;
         margin-top: 0.3rem;
-        opacity: 0.9;
+        opacity: 0.88;
     }
+
+    /* ── Section labels ── */
+    .section-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        color: var(--eu-navy);
+        text-transform: uppercase;
+        margin: 1.2rem 0 0.4rem 0;
+        border-bottom: 2px solid var(--eu-pastel);
+        padding-bottom: 0.2rem;
+    }
+
+    /* ── Citation boxes ── */
     .citation-box {
-        background: #f8f9fa;
-        border-left: 4px solid #2c3e50;
+        background: var(--eu-pastel);
+        border-left: 4px solid var(--eu-navy);
         padding: 0.8rem 1rem;
         margin: 0.5rem 0;
-        border-radius: 0 6px 6px 0;
+        border-radius: 0 8px 8px 0;
     }
     .citation-article {
         font-weight: 700;
-        font-size: 0.95rem;
-        color: #2c3e50;
+        font-size: 0.92rem;
+        color: var(--eu-navy-dark);
     }
     .citation-summary {
-        font-size: 0.88rem;
-        color: #555;
-        margin-top: 0.2rem;
+        font-size: 0.85rem;
+        color: #3a4a6b;
+        margin-top: 0.25rem;
     }
+
+    /* ── Ambiguity boxes ── */
     .ambiguity-box {
-        background: #fff8e1;
-        border-left: 4px solid #f39c12;
+        background: #EFF6FF;
+        border-left: 4px solid var(--eu-pastel-mid);
         padding: 0.7rem 1rem;
         margin: 0.4rem 0;
-        border-radius: 0 6px 6px 0;
-        font-size: 0.9rem;
-        color: #7d5a00;
+        border-radius: 0 8px 8px 0;
+        font-size: 0.88rem;
+        color: #1e3a5f;
     }
+
+    /* ── Disclaimer ── */
     .disclaimer {
-        font-size: 0.78rem;
-        color: #888;
+        font-size: 0.76rem;
+        color: #6b7280;
         font-style: italic;
-        border-top: 1px solid #eee;
+        border-top: 2px solid var(--eu-pastel);
         padding-top: 1rem;
-        margin-top: 1.5rem;
-    }
-    .section-label {
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.1em;
-        color: #888;
-        text-transform: uppercase;
-        margin-bottom: 0.4rem;
+        margin-top: 1.8rem;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ── Header ────────────────────────────────────────────────────────────────────
 
-st.markdown("## ⚖️ AI Act Risk Classifier")
-st.markdown(
-    "Classify AI system use cases under **Regulation (EU) 2024/1689** — "
-    "with article-by-article legal justification."
-)
-st.divider()
+st.markdown("""
+<div class="eu-header">
+    <div class="eu-stars">★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★ ★</div>
+    <h1>⚖️ AI Act Risk Classifier</h1>
+    <p>Classify AI system use cases under <strong>Regulation (EU) 2024/1689</strong>
+    — article-by-article legal justification powered by RAG + LLM.</p>
+</div>
+""", unsafe_allow_html=True)
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 
