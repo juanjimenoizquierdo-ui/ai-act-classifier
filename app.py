@@ -196,9 +196,28 @@ st.divider()
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 
 with st.sidebar:
+    st.markdown("### 🔑 API Key")
+    st.caption(
+        "This app uses the [Anthropic Claude API](https://console.anthropic.com). "
+        "Your key is used only for this session and never stored."
+    )
+    user_api_key = st.text_input(
+        "Anthropic API Key",
+        type="password",
+        placeholder="sk-ant-...",
+        label_visibility="collapsed",
+    )
+    if user_api_key:
+        os.environ["ANTHROPIC_API_KEY"] = user_api_key
+        os.environ["LLM_PROVIDER"] = "claude"
+        st.success("Key set — ready to classify.")
+    else:
+        st.info("Get a free key with $5 credit at [console.anthropic.com](https://console.anthropic.com).")
+
+    st.divider()
     st.markdown("### About")
     st.markdown(
-        "This tool classifies AI system use cases by risk level under the EU AI Act:\n\n"
+        "Classifies AI system use cases under the EU AI Act:\n\n"
         "- 🚫 **Prohibited** — Article 5\n"
         "- ⚠️ **High Risk** — Article 6 + Annex III\n"
         "- ℹ️ **Limited Risk** — Article 50\n"
@@ -207,18 +226,15 @@ with st.sidebar:
     st.divider()
     st.markdown("### How it works")
     st.markdown(
-        "1. **Rule pre-filter** — keyword signals mapped to articles\n"
+        "1. **Rule pre-filter** — keyword signals\n"
         "2. **RAG retrieval** — semantic search over AI Act corpus\n"
         "3. **LLM analysis** — chain-of-thought legal reasoning"
     )
     st.divider()
     st.markdown(
-        "⚠️ **Not legal advice.** [Read disclaimer](https://github.com/juanjimenoizquierdo-ui/ai-act-classifier/blob/master/docs/legal_disclaimer.md)",
-        unsafe_allow_html=False,
+        "⚠️ **Not legal advice.** [Read disclaimer](https://github.com/juanjimenoizquierdo-ui/ai-act-classifier/blob/master/docs/legal_disclaimer.md)"
     )
-    st.markdown(
-        "🔗 [GitHub](https://github.com/juanjimenoizquierdo-ui/ai-act-classifier)",
-    )
+    st.markdown("🔗 [GitHub](https://github.com/juanjimenoizquierdo-ui/ai-act-classifier)")
 
 # ── Input tabs ────────────────────────────────────────────────────────────────
 
@@ -268,7 +284,9 @@ elif btn_example:
 # ── Classification ────────────────────────────────────────────────────────────
 
 if classify_btn:
-    if not use_case.strip():
+    if not user_api_key:
+        st.warning("Enter your Anthropic API key in the sidebar to classify.")
+    elif not use_case.strip():
         st.warning("Please enter a use case description.")
     else:
         try:
