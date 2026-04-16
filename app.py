@@ -67,11 +67,17 @@ ensure_corpus_loaded()
 
 # ── Logo ──────────────────────────────────────────────────────────────────────
 
-def _logo_b64() -> str:
-    logo_path = Path(__file__).parent / "assets" / "logo.png"
-    return base64.b64encode(logo_path.read_bytes()).decode()
+def _img_b64(filename: str) -> str:
+    path = Path(__file__).parent / "assets" / filename
+    return base64.b64encode(path.read_bytes()).decode()
 
-LOGO_B64 = _logo_b64()
+LOGO_B64 = _img_b64("logo.png")
+ICON_B64 = {
+    RiskLevel.PROHIBITED: _img_b64("prohibited.png"),
+    RiskLevel.HIGH:       _img_b64("high_risk.png"),
+    RiskLevel.LIMITED:    _img_b64("limited_risk.png"),
+    RiskLevel.MINIMAL:    _img_b64("minimal_risk.png"),
+}
 
 # ── Page config ───────────────────────────────────────────────────────────────
 
@@ -378,13 +384,19 @@ if classify_btn:
 
         cfg = RISK_STYLES.get(result.risk_level, RISK_STYLES[RiskLevel.UNCLEAR])
         conf_color, conf_label = CONFIDENCE_CONFIG.get(result.confidence, ("#6B7280", "Unknown"))
+        icon_b64 = ICON_B64.get(result.risk_level)
+        icon_html = (
+            f'<img src="data:image/png;base64,{icon_b64}" '
+            f'style="height:2rem; vertical-align:middle; margin-right:0.4rem;">'
+            if icon_b64 else cfg["icon"] + " "
+        )
 
         # Risk banner
         st.markdown(
             f"""
             <div class="risk-banner"
                  style="background:{cfg['grad']}; color:{cfg['text']}; border-left-color:{cfg['border']}">
-                <div class="risk-label">{cfg['icon']} {cfg['label']}</div>
+                <div class="risk-label">{icon_html}{cfg['label']}</div>
                 <div class="risk-desc">{cfg['description']}</div>
             </div>
             """,
