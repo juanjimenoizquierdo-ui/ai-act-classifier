@@ -206,6 +206,13 @@ with st.sidebar:
         type="password",
         placeholder="sk-ant-...",
         label_visibility="collapsed",
+        help=(
+            "🔒 Your API key is never stored or logged.\n\n"
+            "It is kept in memory only for the duration of your browser session "
+            "and discarded when you close or refresh the page.\n\n"
+            "No key is shared between users. Each session is independent.\n\n"
+            "You can verify this in the open-source code on GitHub."
+        ),
     )
     if user_api_key:
         os.environ["ANTHROPIC_API_KEY"] = user_api_key
