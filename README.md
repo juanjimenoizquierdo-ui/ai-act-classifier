@@ -4,6 +4,8 @@ Automated risk classification of AI systems under **Regulation (EU) 2024/1689** 
 
 Given a free-text description of an AI system's use case, this tool classifies it as **prohibited**, **high-risk**, **limited-risk**, or **minimal-risk** — with article-by-article legal justification.
 
+**[Try it live on Streamlit Cloud](https://ai-act-classifier.streamlit.app)** (BYOK — bring your own Anthropic API key)
+
 > **This tool does not provide legal advice.** See [docs/legal_disclaimer.md](docs/legal_disclaimer.md).
 
 ---
@@ -69,7 +71,7 @@ Core provisions covered:
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ai-act-classifier.git
+git clone https://github.com/juanjimenoizquierdo-ui/ai-act-classifier.git
 cd ai-act-classifier
 pip install -r requirements.txt
 ```
@@ -169,6 +171,8 @@ ai-act-classifier/
 ├── scripts/
 │   ├── ingest_corpus.py  # Chunks → ChromaDB
 │   └── demo.py           # CLI interface
+├── assets/               # Custom icons (logo, risk level icons)
+├── app.py                # Streamlit web UI
 ├── tests/
 │   ├── test_rules.py     # Unit tests (no API needed)
 │   └── test_cases.json   # Labelled examples for evaluation
@@ -206,6 +210,7 @@ python -m pytest tests/test_rules.py -v
 | Embeddings | `sentence-transformers/paraphrase-multilingual-mpnet-base-v2` |
 | PDF processing | PyMuPDF |
 | Output schema | Pydantic v2 |
+| Web UI | Streamlit |
 | CLI | Typer + Rich |
 
 ---
