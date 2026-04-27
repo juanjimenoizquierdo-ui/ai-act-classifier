@@ -18,7 +18,7 @@ load_dotenv()  # local dev; Streamlit Cloud injects secrets as env vars automati
 from models.schemas import ClassificationResult, RiskLevel, ArticleCitation
 from classifier.rules import apply_rules
 from classifier.retriever import AIActRetriever
-from classifier.prompts import SYSTEM_PROMPT, build_user_prompt
+from classifier.prompts import build_system_prompt, build_user_prompt
 
 load_dotenv()
 
@@ -105,13 +105,14 @@ def _parse_response(raw: str, original_use_case: str) -> ClassificationResult:
     )
 
 
-def classify(use_case: str, n_retrieved: int = 8) -> ClassificationResult:
+def classify(use_case: str, n_retrieved: int = 8, language: str = "English") -> ClassificationResult:
     """
     Classify an AI system use case under the EU AI Act.
 
     Args:
         use_case: Free-text description of the AI system and its intended use.
         n_retrieved: Number of corpus chunks to retrieve for RAG context.
+        language: Output language for reasoning and text fields (e.g. "Spanish", "French").
 
     Returns:
         ClassificationResult with risk level, citations, and reasoning.
@@ -132,8 +133,9 @@ def classify(use_case: str, n_retrieved: int = 8) -> ClassificationResult:
     context = retriever.format_for_prompt(chunks)
 
     # Step 3 — LLM classification
+    system_prompt = build_system_prompt(language)
     user_prompt = build_user_prompt(use_case, context, rule_hint)
-    raw_response = _call_llm(SYSTEM_PROMPT, user_prompt)
+    raw_response = _call_llm(system_prompt, user_prompt)
 
     # Step 4 — Parse and return
     return _parse_response(raw_response, use_case)

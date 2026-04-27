@@ -302,6 +302,22 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
     st.divider()
+    st.markdown("### 🌐 Output language")
+    EU_LANGUAGES = [
+        "Bulgarian", "Croatian", "Czech", "Danish", "Dutch",
+        "English", "Estonian", "Finnish", "French", "German",
+        "Greek", "Hungarian", "Irish", "Italian", "Latvian",
+        "Lithuanian", "Maltese", "Polish", "Portuguese", "Romanian",
+        "Slovak", "Slovenian", "Spanish", "Swedish",
+    ]
+    selected_language = st.selectbox(
+        "Language",
+        options=EU_LANGUAGES,
+        index=EU_LANGUAGES.index("English"),
+        label_visibility="collapsed",
+        help="The classifier will produce its reasoning and output in the selected EU official language.",
+    )
+    st.divider()
     st.markdown("### How it works")
     st.markdown(
         "1. **Rule pre-filter** — keyword signals\n"
@@ -371,7 +387,7 @@ if classify_btn:
     else:
         try:
             with st.spinner("Running pipeline: rules → RAG → LLM..."):
-                result = classify(use_case.strip())
+                result = classify(use_case.strip(), language=selected_language)
         except TypeError as e:
             if "api_key" in str(e).lower() or "authentication" in str(e).lower():
                 st.error(

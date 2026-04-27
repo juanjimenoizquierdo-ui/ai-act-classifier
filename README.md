@@ -237,4 +237,10 @@ Built by a Spanish lawyer (Máster de Acceso a la Abogacía) with experience in 
 
 ## License
 
-MIT
+© 2025 Juan Jimeno Izquierdo — All rights reserved.
+
+The source code is publicly visible for educational and portfolio purposes.
+You may read it, learn from it, and send feedback — but you may not modify,
+redistribute, or use it commercially without explicit permission.
+
+See [LICENSE](LICENSE) for full terms.
