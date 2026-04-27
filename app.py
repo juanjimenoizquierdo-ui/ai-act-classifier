@@ -6,9 +6,11 @@ Deploy free:  https://streamlit.io/cloud
 """
 
 import base64
+import datetime
 import json
 import os
 import sys
+import unicodedata
 from pathlib import Path
 
 import streamlit as st
@@ -17,6 +19,128 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from classifier import classify
 from models.schemas import RiskLevel
+
+
+# ── PDF export ────────────────────────────────────────────────────────────────
+
+def _to_latin1(text: str) -> str:
+    """Normalize unicode and encode to latin-1 for fpdf core fonts."""
+    return unicodedata.normalize("NFC", text).encode("latin-1", errors="replace").decode("latin-1")
+
+
+def generate_pdf(result, language: str) -> bytes:
+    from fpdf import FPDF
+
+    RISK_LABELS = {
+        RiskLevel.PROHIBITED: "PROHIBITED",
+        RiskLevel.HIGH:       "HIGH RISK",
+        RiskLevel.LIMITED:    "LIMITED RISK",
+        RiskLevel.MINIMAL:    "MINIMAL RISK",
+        RiskLevel.UNCLEAR:    "UNCLEAR",
+    }
+    RISK_COLORS = {
+        RiskLevel.PROHIBITED: (239, 68,  68),
+        RiskLevel.HIGH:       (245, 158, 11),
+        RiskLevel.LIMITED:    (79,  107, 255),
+        RiskLevel.MINIMAL:    (16,  185, 129),
+        RiskLevel.UNCLEAR:    (107, 114, 128),
+    }
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_margins(20, 20, 20)
+    pdf.set_auto_page_break(auto=True, margin=20)
+
+    # Header
+    pdf.set_fill_color(10, 14, 39)
+    pdf.rect(0, 0, 210, 38, "F")
+    pdf.set_text_color(123, 147, 255)
+    pdf.set_font("Helvetica", "", 7)
+    pdf.set_xy(20, 8)
+    pdf.cell(0, 4, "REGULATION (EU) 2024/1689 \u00b7 AI ACT", ln=True)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Helvetica", "B", 17)
+    pdf.set_x(20)
+    pdf.cell(0, 9, "AI Act Risk Classifier", ln=True)
+    pdf.set_font("Helvetica", "", 8)
+    pdf.set_text_color(156, 163, 192)
+    pdf.set_x(20)
+    pdf.cell(0, 5, "Automated classification report \u2014 for informational purposes only", ln=True)
+
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_y(46)
+
+    # Meta line
+    pdf.set_font("Helvetica", "", 8)
+    pdf.set_text_color(107, 114, 128)
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    pdf.cell(0, 5, f"Generated: {now}    |    Output language: {language}", ln=True)
+    pdf.ln(4)
+
+    # Risk banner
+    r, g, b = RISK_COLORS.get(result.risk_level, (107, 114, 128))
+    pdf.set_fill_color(r, g, b)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Helvetica", "B", 13)
+    label = RISK_LABELS.get(result.risk_level, "UNCLEAR")
+    pdf.cell(0, 11, f"  {label}", ln=True, fill=True)
+    pdf.ln(2)
+
+    # Confidence
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(80, 80, 80)
+    pdf.cell(0, 5, f"Confidence: {result.confidence.upper()}", ln=True)
+    pdf.ln(5)
+
+    def section_header(title: str):
+        pdf.set_font("Helvetica", "B", 9)
+        pdf.set_text_color(79, 107, 255)
+        pdf.cell(0, 6, title, ln=True)
+        pdf.set_draw_color(79, 107, 255)
+        pdf.line(20, pdf.get_y(), 190, pdf.get_y())
+        pdf.ln(2)
+        pdf.set_text_color(0, 0, 0)
+
+    # Use case
+    section_header("USE CASE")
+    pdf.set_font("Helvetica", "", 9)
+    pdf.multi_cell(0, 5, _to_latin1(result.use_case))
+    pdf.ln(5)
+
+    # Legal basis
+    if result.primary_citations:
+        section_header("LEGAL BASIS")
+        for citation in result.primary_citations:
+            pdf.set_font("Helvetica", "B", 9)
+            pdf.cell(0, 5, _to_latin1(citation.article), ln=True)
+            pdf.set_font("Helvetica", "", 9)
+            pdf.set_text_color(80, 80, 80)
+            pdf.multi_cell(0, 5, _to_latin1(citation.summary))
+            pdf.set_text_color(0, 0, 0)
+            pdf.ln(2)
+        pdf.ln(3)
+
+    # Reasoning
+    section_header("LEGAL REASONING")
+    pdf.set_font("Helvetica", "", 9)
+    pdf.multi_cell(0, 5, _to_latin1(result.reasoning))
+    pdf.ln(5)
+
+    # Ambiguities
+    if result.ambiguities:
+        section_header("REQUIRES HUMAN REVIEW")
+        pdf.set_font("Helvetica", "", 9)
+        for amb in result.ambiguities:
+            pdf.multi_cell(0, 5, _to_latin1(f"\u2022 {amb}"))
+            pdf.ln(1)
+        pdf.ln(3)
+
+    # Disclaimer
+    pdf.set_font("Helvetica", "I", 7.5)
+    pdf.set_text_color(107, 114, 128)
+    pdf.multi_cell(0, 4, _to_latin1(result.disclaimer))
+
+    return bytes(pdf.output())
 
 
 # ── Auto-ingest on cold start ─────────────────────────────────────────────────
@@ -430,6 +554,16 @@ if classify_btn:
                     f'<div class="ambiguity-box">⚠ {amb}</div>',
                     unsafe_allow_html=True,
                 )
+
+        # PDF export
+        pdf_bytes = generate_pdf(result, selected_language)
+        st.download_button(
+            label="⬇️ Download PDF report",
+            data=pdf_bytes,
+            file_name=f"ai_act_classification_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
 
         # JSON export
         with st.expander("Raw JSON output"):
