@@ -265,30 +265,11 @@ st.markdown(f"""
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 
 with st.sidebar:
-    st.markdown("### 🔑 API Key")
-    st.caption(
-        "This app uses the [Anthropic Claude API](https://console.anthropic.com). "
-        "Your key is used only for this session and never stored."
-    )
-    user_api_key = st.text_input(
-        "Anthropic API Key",
-        type="password",
-        placeholder="sk-ant-...",
-        label_visibility="collapsed",
-        help=(
-            "🔒 Your API key is never stored or logged.\n\n"
-            "It is kept in memory only for the duration of your browser session "
-            "and discarded when you close or refresh the page.\n\n"
-            "No key is shared between users. Each session is independent.\n\n"
-            "You can verify this in the open-source code on GitHub."
-        ),
-    )
-    if user_api_key:
-        os.environ["ANTHROPIC_API_KEY"] = user_api_key
-        os.environ["LLM_PROVIDER"] = "claude"
-        st.success("Key set — ready to classify.")
-    else:
-        st.info("Get a free key with $5 credit at [console.anthropic.com](https://console.anthropic.com).")
+    # Inject secrets into env vars for the classifier
+    if "ANTHROPIC_API_KEY" in st.secrets:
+        os.environ["ANTHROPIC_API_KEY"] = st.secrets["ANTHROPIC_API_KEY"]
+    if "GROQ_API_KEY" in st.secrets:
+        os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
 
     st.divider()
     st.markdown("### Risk levels")
@@ -345,7 +326,7 @@ EXAMPLES = {
 tab_own, tab_example = st.tabs(["✏️  Classify your use case", "📋  Try an example"])
 
 with tab_own:
-    st.caption("Describe the AI system — the more detail, the better the analysis.")
+    st.caption("Describe the AI system — the more detail, the better the analysis. Powered by **Claude Sonnet**.")
     use_case_own = st.text_area(
         "Use case description",
         height=140,
@@ -355,7 +336,7 @@ with tab_own:
     btn_own = st.button("Classify", type="primary", use_container_width=True, key="btn_own")
 
 with tab_example:
-    st.caption("Select a pre-built case to see the classifier across different risk levels.")
+    st.caption("Select a pre-built case to explore risk levels. Powered by **Llama 3.3 70B** via Groq — no API key needed.")
     selected = st.selectbox(
         "Example cases",
         options=list(EXAMPLES.keys()),
@@ -368,36 +349,28 @@ with tab_example:
 
 use_case = ""
 classify_btn = False
+is_example = False
 if btn_own and use_case_own.strip():
     use_case = use_case_own.strip()
     classify_btn = True
+    is_example = False
 elif btn_own and not use_case_own.strip():
     st.warning("Please describe your AI system use case before classifying.")
 elif btn_example:
     use_case = EXAMPLES[selected]
     classify_btn = True
+    is_example = True
 
 # ── Classification ────────────────────────────────────────────────────────────
 
 if classify_btn:
-    if not user_api_key:
-        st.warning("Enter your Anthropic API key in the sidebar to classify.")
-    elif not use_case.strip():
+    if not use_case.strip():
         st.warning("Please enter a use case description.")
     else:
+        provider = "groq" if is_example else "claude"
         try:
             with st.spinner("Running pipeline: rules → RAG → LLM..."):
-                result = classify(use_case.strip(), language=selected_language)
-        except TypeError as e:
-            if "api_key" in str(e).lower() or "authentication" in str(e).lower():
-                st.error(
-                    "**LLM API key not configured.**\n\n"
-                    "Enter your Anthropic API key in the sidebar.\n\n"
-                    "Get a free key with $5 credit at [console.anthropic.com](https://console.anthropic.com)."
-                )
-            else:
-                st.error(f"Unexpected error: {e}")
-            st.stop()
+                result = classify(use_case.strip(), language=selected_language, provider=provider)
         except Exception as e:
             st.error(f"Classification failed: {e}")
             st.stop()

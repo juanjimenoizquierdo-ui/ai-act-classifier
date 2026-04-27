@@ -39,6 +39,23 @@ def _call_claude(system: str, user: str) -> str:
     return message.content[0].text
 
 
+def _call_groq(system: str, user: str) -> str:
+    from groq import Groq
+    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+    model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+
+    response = client.chat.completions.create(
+        model=model,
+        temperature=0.1,
+        max_tokens=2048,
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+    )
+    return response.choices[0].message.content
+
+
 def _call_ollama(system: str, user: str) -> str:
     import ollama
     model = os.getenv("OLLAMA_MODEL", "llama3.3")
@@ -54,8 +71,11 @@ def _call_ollama(system: str, user: str) -> str:
     return response["message"]["content"]
 
 
-def _call_llm(system: str, user: str) -> str:
-    if LLM_PROVIDER == "ollama":
+def _call_llm(system: str, user: str, provider: str | None = None) -> str:
+    effective_provider = provider or LLM_PROVIDER
+    if effective_provider == "groq":
+        return _call_groq(system, user)
+    if effective_provider == "ollama":
         return _call_ollama(system, user)
     return _call_claude(system, user)
 
@@ -105,7 +125,12 @@ def _parse_response(raw: str, original_use_case: str) -> ClassificationResult:
     )
 
 
-def classify(use_case: str, n_retrieved: int = 8, language: str = "English") -> ClassificationResult:
+def classify(
+    use_case: str,
+    n_retrieved: int = 8,
+    language: str = "English",
+    provider: str | None = None,
+) -> ClassificationResult:
     """
     Classify an AI system use case under the EU AI Act.
 
@@ -113,6 +138,7 @@ def classify(use_case: str, n_retrieved: int = 8, language: str = "English") -> 
         use_case: Free-text description of the AI system and its intended use.
         n_retrieved: Number of corpus chunks to retrieve for RAG context.
         language: Output language for reasoning and text fields (e.g. "Spanish", "French").
+        provider: LLM provider override ("claude", "groq", "ollama"). Defaults to LLM_PROVIDER env var.
 
     Returns:
         ClassificationResult with risk level, citations, and reasoning.
@@ -135,7 +161,7 @@ def classify(use_case: str, n_retrieved: int = 8, language: str = "English") -> 
     # Step 3 — LLM classification
     system_prompt = build_system_prompt(language)
     user_prompt = build_user_prompt(use_case, context, rule_hint)
-    raw_response = _call_llm(system_prompt, user_prompt)
+    raw_response = _call_llm(system_prompt, user_prompt, provider=provider)
 
     # Step 4 — Parse and return
     return _parse_response(raw_response, use_case)

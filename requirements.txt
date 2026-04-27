@@ -1,5 +1,6 @@
 # LLM clients
 anthropic>=0.40.0
+groq>=0.11.0
 ollama>=0.4.0
 
 # Vector DB & embeddings
