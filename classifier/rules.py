@@ -52,6 +52,14 @@ PROHIBITED_PATTERNS: list[tuple[list[str], str]] = [
         ["predictive policing", "crime prediction", "individual crime risk", "criminal profiling"],
         "Article 5(1)(e) — Predictive policing based solely on profiling",
     ),
+    (
+        [
+            "nudify", "nudifier", "undress ai", "deepnude", "synthetic nude",
+            "non-consensual intimate", "non-consensual sexual", "csam", "child sexual abuse material",
+            "child sexual exploitation", "generated sexual content of minors",
+        ],
+        "Article 5 (Omnibus amendment) — Non-consensual intimate imagery / CSAM generators",
+    ),
 ]
 
 # ── Annex III — High-Risk Areas ───────────────────────────────────────────────

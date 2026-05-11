@@ -26,6 +26,14 @@ Risk levels:
 - minimal_risk   → Everything else (no specific obligations)
 - unclear        → Insufficient information to classify
 
+Application timeline (as amended by the AI Act Omnibus, 2025):
+- Article 5 prohibitions (general): 2 February 2025
+- Article 5 — nudifiers / CSAM (new Omnibus prohibition): 2 December 2026
+- Article 50 — watermarking of synthetic content (Art. 50(2)): 2 August 2026; transitional period for providers already on the market → compliance required by 2 December 2026
+- Annex III high-risk systems (biometrics, employment, education, critical infrastructure, etc.): 2 December 2027 (delayed from August 2026)
+- Annex I high-risk systems (AI embedded in sector-regulated products, e.g. machinery): 2 August 2028 (delayed from August 2027)
+- SME/SMC exemptions: extended to small mid-cap companies (SMCs) under Omnibus
+
 LANGUAGE INSTRUCTION: Write all text fields (reasoning, citation summaries, ambiguities, disclaimer)
 in {language}. Keep article references in their standard format (e.g. "Article 5(1)(a)").
 The JSON keys must remain in English exactly as shown below.

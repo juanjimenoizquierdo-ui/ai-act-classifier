@@ -1,0 +1,61 @@
+name: EUR-Lex AI Act Monitor
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # cada lunes a las 8:00 UTC
+  workflow_dispatch:
+
+jobs:
+  check-updates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check EUR-Lex for AI Act amendments
+        id: check
+        run: |
+          # Consulta la API de EUR-Lex buscando actos que modifiquen el Reglamento 2024/1689
+          RESPONSE=$(curl -s "https://eur-lex.europa.eu/search.html?qid=&type=quick&lang=en&andText0=AI+Act+2024%2F1689&inforce=true&DTS_DOM=ALL&typeOfActStatus=AMENDED_BY&SUBDOM_INIT=ALL_ALL&DTS_SUBDOM=ALL_ALL&orText0=&notText0=&scope=EURLEX&or0=&dateFrom=2025-01-01&dateTo=&page=1&pageSize=5&output=application/json" \
+            -H "Accept: application/json" 2>/dev/null || echo "fetch_failed")
+
+          # Alternativa: consulta RSS de novedades del AI Act
+          RSS=$(curl -s "https://eur-lex.europa.eu/rss/eurlexNews.xml?type=REGULATION&lang=EN" 2>/dev/null || echo "rss_failed")
+
+          # Busca menciones al Reglamento 2024/1689 en el RSS
+          if echo "$RSS" | grep -q "2024/1689"; then
+            echo "changes_found=true" >> $GITHUB_OUTPUT
+            ITEMS=$(echo "$RSS" | grep -A5 "2024/1689" | head -30)
+            echo "items<<EOF" >> $GITHUB_OUTPUT
+            echo "$ITEMS" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "changes_found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Open GitHub Issue if changes detected
+        if: steps.check.outputs.changes_found == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --repo ${{ github.repository }} \
+            --title "[EUR-Lex Monitor] Posible actualización del AI Act detectada" \
+            --body "$(cat <<'EOF'
+          ## Alerta automatizada — EUR-Lex Monitor
+
+          Se han detectado referencias al Reglamento (UE) 2024/1689 en las novedades de EUR-Lex esta semana.
+
+          **Acción requerida:** Revisar manualmente si hay enmiendas, actos delegados o de ejecución que afecten al clasificador.
+
+          **Qué revisar:**
+          - https://eur-lex.europa.eu/legal-content/EN/ALL/?uri=CELEX:32024R1689
+          - Nuevos actos del Omnibus o correcciones de erratas
+          - Cambios en plazos de aplicación
+
+          **Archivos a actualizar si procede:**
+          - `classifier/rules.py` — prohibiciones y patrones de riesgo
+          - `classifier/prompts.py` — plazos y contexto normativo
+          - `corpus/` — reingerir si el texto del reglamento ha cambiado
+
+          ---
+          *Generado automáticamente por el workflow `eurlex_monitor.yml`*
+          EOF
+          )"
