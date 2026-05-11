@@ -1,0 +1,15 @@
+name: Keep App Alive
+
+on:
+  schedule:
+    - cron: '0 */12 * * *'  # cada 12 horas
+  workflow_dispatch:         # permite ejecutarlo manualmente también
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Streamlit app
+        run: |
+          curl -s -o /dev/null -w "HTTP status: %{http_code}" \
+            https://ai-act-classifier.streamlit.app
