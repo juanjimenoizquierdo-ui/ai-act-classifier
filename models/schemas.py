@@ -15,6 +15,14 @@ class ArticleCitation(BaseModel):
     summary: str = Field(description="What this provision establishes regarding the use case")
 
 
+class DecisionStep(BaseModel):
+    step: int
+    name: str = Field(description="e.g. 'Rule pre-filter', 'RAG retrieval', 'LLM analysis'")
+    outcome: str = Field(description="What the step found or decided")
+    detail: str = Field(default="", description="Extra detail: matched keywords, retrieved articles, etc.")
+    triggered: bool = Field(default=False, description="Whether this step produced a positive signal")
+
+
 class ClassificationResult(BaseModel):
     use_case: str = Field(description="Original use case description")
     risk_level: RiskLevel
@@ -26,6 +34,14 @@ class ClassificationResult(BaseModel):
     ambiguities: list[str] = Field(
         default_factory=list,
         description="Aspects that require human legal review",
+    )
+    clarifying_questions: list[str] = Field(
+        default_factory=list,
+        description="Questions that, if answered, would resolve remaining ambiguities",
+    )
+    decision_trace: list[DecisionStep] = Field(
+        default_factory=list,
+        description="Step-by-step trace of the classification pipeline",
     )
     disclaimer: str = Field(
         default=(

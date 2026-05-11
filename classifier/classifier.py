@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 load_dotenv()  # local dev; Streamlit Cloud injects secrets as env vars automatically
 
-from models.schemas import ClassificationResult, RiskLevel, ArticleCitation
+from models.schemas import ClassificationResult, RiskLevel, ArticleCitation, DecisionStep
 from classifier.rules import apply_rules
 from classifier.retriever import AIActRetriever
 from classifier.prompts import build_system_prompt, build_user_prompt
@@ -121,6 +121,7 @@ def _parse_response(raw: str, original_use_case: str) -> ClassificationResult:
         primary_citations=citations,
         reasoning=data.get("reasoning", ""),
         ambiguities=data.get("ambiguities", []),
+        clarifying_questions=data.get("clarifying_questions", []),
         disclaimer=data.get("disclaimer", ClassificationResult.model_fields["disclaimer"].default),
     )
 
@@ -143,6 +144,8 @@ def classify(
     Returns:
         ClassificationResult with risk level, citations, and reasoning.
     """
+    decision_trace: list[DecisionStep] = []
+
     # Step 1 — Rule pre-filter
     rule_signal = apply_rules(use_case)
     rule_hint = ""
@@ -152,16 +155,49 @@ def classify(
             f"Legal reference: {rule_signal.legal_reference}\n"
             f"Matched keywords: {', '.join(rule_signal.matched_keywords)}"
         )
+        decision_trace.append(DecisionStep(
+            step=1,
+            name="Rule pre-filter",
+            outcome=f"Signal: {rule_signal.risk_level.value.upper()} — {rule_signal.legal_reference}",
+            detail=f"Keywords matched: {', '.join(rule_signal.matched_keywords)}",
+            triggered=True,
+        ))
+    else:
+        decision_trace.append(DecisionStep(
+            step=1,
+            name="Rule pre-filter",
+            outcome="No keyword signal — proceeding to full RAG + LLM analysis",
+            triggered=False,
+        ))
 
     # Step 2 — RAG retrieval
     retriever = AIActRetriever()
     chunks = retriever.retrieve(use_case, n_results=n_retrieved)
     context = retriever.format_for_prompt(chunks)
+    retrieved_articles = list(dict.fromkeys(
+        c.get("metadata", {}).get("article", "") for c in chunks if c.get("metadata", {}).get("article")
+    ))
+    decision_trace.append(DecisionStep(
+        step=2,
+        name="RAG retrieval",
+        outcome=f"{len(chunks)} provisions retrieved from AI Act corpus",
+        detail=f"Articles: {', '.join(retrieved_articles[:8])}{'...' if len(retrieved_articles) > 8 else ''}",
+        triggered=True,
+    ))
 
     # Step 3 — LLM classification
     system_prompt = build_system_prompt(language)
     user_prompt = build_user_prompt(use_case, context, rule_hint)
     raw_response = _call_llm(system_prompt, user_prompt, provider=provider)
 
-    # Step 4 — Parse and return
-    return _parse_response(raw_response, use_case)
+    # Step 4 — Parse and attach trace
+    result = _parse_response(raw_response, use_case)
+    decision_trace.append(DecisionStep(
+        step=3,
+        name="LLM analysis",
+        outcome=f"Classification: {result.risk_level.value.upper()} (confidence: {result.confidence})",
+        detail=f"{len(result.primary_citations)} citations · {len(result.ambiguities)} ambiguities",
+        triggered=True,
+    ))
+    result.decision_trace = decision_trace
+    return result

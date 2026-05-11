@@ -367,6 +367,64 @@ st.markdown("""
         margin-top: 2rem;
         line-height: 1.55;
     }
+
+    /* Decision trace stepper */
+    .trace-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 0.6rem;
+    }
+    .trace-connector {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    .trace-dot {
+        width: 1.6rem;
+        height: 1.6rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    .trace-dot-active  { background: #4F6BFF; color: #fff; }
+    .trace-dot-passive { background: #1C2152; color: #4F6BFF; border: 1px solid #4F6BFF; }
+    .trace-line {
+        width: 2px;
+        flex: 1;
+        min-height: 1rem;
+        background: rgba(79,107,255,0.2);
+        margin-top: 0.2rem;
+    }
+    .trace-body {
+        background: #12163A;
+        border: 1px solid #1C2152;
+        border-radius: 8px;
+        padding: 0.6rem 0.9rem;
+        flex: 1;
+        margin-bottom: 0.2rem;
+    }
+    .trace-name    { font-size: 0.72rem; font-weight: 700; color: #4F6BFF; letter-spacing: 0.08em; text-transform: uppercase; }
+    .trace-outcome { font-size: 0.85rem; color: #E5E7EB; margin-top: 0.15rem; }
+    .trace-detail  { font-size: 0.77rem; color: #6B7280; margin-top: 0.2rem; font-style: italic; }
+
+    /* Clarifying questions */
+    .clarify-box {
+        background: rgba(79,107,255,0.06);
+        border: 1px solid rgba(79,107,255,0.2);
+        border-left: 4px solid #4F6BFF;
+        padding: 0.8rem 1.1rem;
+        margin: 0.45rem 0;
+        border-radius: 0 10px 10px 0;
+        font-size: 0.85rem;
+        color: #DBEAFE;
+        line-height: 1.55;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -546,12 +604,44 @@ if classify_btn:
             unsafe_allow_html=True,
         )
 
+        # Decision trace
+        if result.decision_trace:
+            st.markdown('<div class="section-label">Decision Matrix</div>', unsafe_allow_html=True)
+            steps_html = ""
+            for i, step in enumerate(result.decision_trace):
+                is_last = i == len(result.decision_trace) - 1
+                dot_class = "trace-dot-active" if step.triggered else "trace-dot-passive"
+                line_html = "" if is_last else '<div class="trace-line"></div>'
+                detail_html = f'<div class="trace-detail">{step.detail}</div>' if step.detail else ""
+                steps_html += f"""
+                <div class="trace-step">
+                    <div class="trace-connector">
+                        <div class="trace-dot {dot_class}">{step.step}</div>
+                        {line_html}
+                    </div>
+                    <div class="trace-body">
+                        <div class="trace-name">{step.name}</div>
+                        <div class="trace-outcome">{step.outcome}</div>
+                        {detail_html}
+                    </div>
+                </div>"""
+            st.markdown(steps_html, unsafe_allow_html=True)
+
         # Ambiguities
         if result.ambiguities:
             st.markdown('<div class="section-label">Requires Human Review</div>', unsafe_allow_html=True)
             for amb in result.ambiguities:
                 st.markdown(
                     f'<div class="ambiguity-box">⚠ {amb}</div>',
+                    unsafe_allow_html=True,
+                )
+
+        # Clarifying questions
+        if result.clarifying_questions:
+            st.markdown('<div class="section-label">Clarifying Questions</div>', unsafe_allow_html=True)
+            for q in result.clarifying_questions:
+                st.markdown(
+                    f'<div class="clarify-box">? {q}</div>',
                     unsafe_allow_html=True,
                 )
 

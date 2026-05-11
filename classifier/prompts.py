@@ -47,7 +47,8 @@ Output ONLY valid JSON matching this schema (no markdown, no explanation outside
     {{"article": "<reference>", "summary": "<what it establishes for this case>"}}
   ],
   "reasoning": "<step-by-step legal analysis>",
-  "ambiguities": ["<aspect requiring human review>"],
+  "ambiguities": ["<aspect of the use case that is legally uncertain or underspecified>"],
+  "clarifying_questions": ["<specific question that, if answered, would resolve an ambiguity — only include when confidence is medium or low>"],
   "disclaimer": "<standard legal disclaimer>"
 }}"""
 
