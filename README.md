@@ -229,7 +229,11 @@ python -m pytest tests/test_rules.py -v
 
 ## Author
 
-Built by a Spanish lawyer (Máster de Acceso a la Abogacía) with experience in compliance and legal tech automation, as a study project for the EU AI Act and a portfolio demonstration.
+## Author
+Juan Jimeno Izquierdo — Spanish lawyer specialising in AI regulation and privacy law (EU AI Act, GDPR). CIPP/E candidate (IAPP). 
+AI Ethics certified (University of Helsinki).
+
+Built as a technical portfolio project demonstrating applied knowledge of Regulation (EU) 2024/1689 and a study exercise.
 
 **Disclaimer**: This project is for educational and portfolio purposes. It does not constitute legal advice.
 
