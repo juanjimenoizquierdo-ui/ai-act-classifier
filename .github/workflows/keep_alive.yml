@@ -2,8 +2,8 @@ name: Keep App Alive
 
 on:
   schedule:
-    - cron: '0 */12 * * *'  # cada 12 horas
-  workflow_dispatch:         # permite ejecutarlo manualmente también
+    - cron: "0 */6 * * *"  # cada 6 horas
+  workflow_dispatch:
 
 jobs:
   ping:
@@ -11,5 +11,5 @@ jobs:
     steps:
       - name: Ping Streamlit app
         run: |
-          curl -s -o /dev/null -w "HTTP status: %{http_code}" \
-            https://ai-act-classifier.streamlit.app
+          curl -s -o /dev/null -w "HTTP status: %{http_code}" --max-time 30 \
+            https://ai-act-classifier-fkw8266qzl38rzgq4fwnqp.streamlit.app
