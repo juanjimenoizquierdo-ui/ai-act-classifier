@@ -4,7 +4,7 @@ Automated risk classification of AI systems under **Regulation (EU) 2024/1689** 
 
 Given a free-text description of an AI system's use case, this tool classifies it as **prohibited**, **high-risk**, **limited-risk**, or **minimal-risk** — with article-by-article legal justification.
 
-**[Try it live on Streamlit Cloud](https://ai-act-classifier-fkw8266qzl38rzgq4fwnqp.streamlit.app/)** (BYOK — bring your own Anthropic API key)
+**[Try it live on Streamlit Cloud](https://ai-act-classifier-fkw8266qzl38rzgq4fwnqp.streamlit.app/)** (BYOK — Try it live — free demo, no API key required)
 
 > **This tool does not provide legal advice.** See [docs/legal_disclaimer.md](docs/legal_disclaimer.md).
 
